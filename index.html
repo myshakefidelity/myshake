@@ -176,10 +176,15 @@
                     <span class="text-2xl font-black text-myshake-dark" id="globalTotalCount">0</span>
                 </div>
 
-                <!-- Action Incrémenter (Gérant) -->
-                <button onclick="addStampToCurrent()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-plus-circle text-lg"></i> Ajouter 1 Tampon
-                </button>
+                <!-- Actions Tampons (Gérant) -->
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <button onclick="removeStampFromCurrent()" class="bg-rose-600 hover:bg-rose-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-minus-circle text-lg"></i> Retirer 1
+                    </button>
+                    <button onclick="addStampToCurrent()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-lg"></i> Ajouter 1
+                    </button>
+                </div>
             </div>
         </div>
     </main>
@@ -342,6 +347,23 @@
             }
         }
 
+        // Retirer Tampon
+        function removeStampFromCurrent() {
+            if (!currentClientId) return;
+            let client = clients[currentClientId];
+            if (!client) return;
+
+            if (client.cycleStamps > 0) {
+                client.cycleStamps -= 1;
+            }
+            if (client.totalStamps > 0) {
+                client.totalStamps -= 1;
+            }
+
+            localStorage.setItem('myshake_clients', JSON.stringify(clients));
+            loadClientView(currentClientId);
+        }
+
         // Scanner
         function startScanner() {
             if (html5QrcodeScanner) return;
@@ -372,16 +394,19 @@
             const clientId = urlParams.get('id');
     
             if (clientId) {
-        // Le client a scanné un QR Code (Lien avec ?id=...)
+                // Le client a scanné un QR Code (Lien avec ?id=...)
                 loadClientView(clientId);
                 switchTab('client');
         
-        // Cacher les contrôles réservés au gérant
-                document.querySelector('.flex.bg-white\\/20').style.display = 'none'; // Cache les onglets (Caisse / Scanner / Vue Client)
-                document.getElementById('baseUrlInput').closest('div').style.display = 'none'; // Cache la configuration URL
+                // Cacher les contrôles réservés au gérant
+                const tabContainer = document.querySelector('.flex.bg-white\\/20');
+                if (tabContainer) tabContainer.style.display = 'none'; // Cache les onglets
+
+                const baseUrlDiv = document.getElementById('baseUrlInput');
+                if (baseUrlDiv) baseUrlDiv.closest('div').style.display = 'none'; // Cache la configuration URL
         
-                const btnAdd = document.querySelector('#view-client button');
-                if (btnAdd) btnAdd.style.display = 'none'; // Cache le bouton "+1 Tampon"
+                const actionButtons = document.querySelector('#view-client .grid.grid-cols-2');
+                if (actionButtons) actionButtons.style.display = 'none'; // Cache les boutons d'ajout/retrait de tampons
             }
         });
     </script>
