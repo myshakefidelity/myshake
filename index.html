@@ -388,6 +388,10 @@
         
                 const actionButtons = document.querySelector('#view-client .grid.grid-cols-2');
                 if (actionButtons) actionButtons.style.display = 'none'; // Cache les boutons d'ajout/retrait de tampons
+
+                // AJOUT : Cacher le total global cumulé pour le client
+                const globalTotalBox = document.querySelector('#globalTotalCount').closest('.bg-white\\/80');
+                if (globalTotalBox) globalTotalBox.style.display = 'none';
             }
         });
     </script>
