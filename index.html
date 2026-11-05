@@ -51,16 +51,6 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 mt-6">
-        <!-- Configuration du domaine local -->
-        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 mb-6 shadow-lg border border-white/40">
-            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
-                <i class="fa-solid fa-link text-teal-600 mr-1"></i> Domaine / URL de votre site (Netlify/GitHub)
-            </label>
-            <input type="text" id="baseUrlInput" placeholder="https://votre-app.netlify.app" 
-                class="w-full text-sm p-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
-            <p class="text-[11px] text-gray-500 mt-1">Lien utilisé pour ouvrir le badge sur le téléphone du client.</p>
-        </div>
-
         <!-- Navigation Onglets -->
         <div class="flex bg-white/20 p-1 rounded-2xl mb-6 backdrop-blur-md">
             <button onclick="switchTab('admin')" id="tab-admin" class="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all bg-white text-teal-900 shadow">
@@ -195,15 +185,9 @@
         let currentClientId = null;
         let html5QrcodeScanner = null;
 
-        // Init Base URL
-        const savedUrl = localStorage.getItem('myshake_base_url') || window.location.origin + window.location.pathname;
-        document.getElementById('baseUrlInput').value = savedUrl;
-        document.getElementById('baseUrlInput').addEventListener('input', (e) => {
-            localStorage.setItem('myshake_base_url', e.target.value);
-        });
-
+        // Base URL automatique (basée sur l'adresse actuelle du site web)
         function getBaseUrl() {
-            return document.getElementById('baseUrlInput').value || window.location.href.split('?')[0];
+            return window.location.origin + window.location.pathname;
         }
 
         // Navigation
@@ -401,9 +385,6 @@
                 // Cacher les contrôles réservés au gérant
                 const tabContainer = document.querySelector('.flex.bg-white\\/20');
                 if (tabContainer) tabContainer.style.display = 'none'; // Cache les onglets
-
-                const baseUrlDiv = document.getElementById('baseUrlInput');
-                if (baseUrlDiv) baseUrlDiv.closest('div').style.display = 'none'; // Cache la configuration URL
         
                 const actionButtons = document.querySelector('#view-client .grid.grid-cols-2');
                 if (actionButtons) actionButtons.style.display = 'none'; // Cache les boutons d'ajout/retrait de tampons
