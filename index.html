@@ -370,9 +370,18 @@
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const clientId = urlParams.get('id');
+    
             if (clientId) {
+        // Le client a scanné un QR Code (Lien avec ?id=...)
                 loadClientView(clientId);
                 switchTab('client');
+        
+        // Cacher les contrôles réservés au gérant
+                document.querySelector('.flex.bg-white\\/20').style.display = 'none'; // Cache les onglets (Caisse / Scanner / Vue Client)
+                document.getElementById('baseUrlInput').closest('div').style.display = 'none'; // Cache la configuration URL
+        
+                const btnAdd = document.querySelector('#view-client button');
+                if (btnAdd) btnAdd.style.display = 'none'; // Cache le bouton "+1 Tampon"
             }
         });
     </script>
