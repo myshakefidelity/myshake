@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyShake Loyalty</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #3CA7B5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1A363B;
+        }
+        .bg-myshake-card {
+            background-color: #F4EFE6;
+        }
+        .bg-myshake-dark {
+            background-color: #2D4A3E;
+        }
+        .text-myshake-dark {
+            color: #2D4A3E;
+        }
+        .border-myshake {
+            border-color: #2D4A3E;
+        }
+        .stamp-box {
+            aspect-ratio: 1;
+            border: 2px dashed #2D4A3E;
+        }
+        .stamp-active {
+            background-color: #2D4A3E;
+            color: #F4EFE6;
+            border: 2px solid #2D4A3E;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+    <!-- Header -->
+    <header class="bg-white/10 backdrop-blur-md border-b border-white/20 py-4 px-6 text-center shadow-sm">
+        <div class="max-w-md mx-auto flex flex-col items-center justify-center gap-1">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid font-bold text-2xl text-white fa-wine-glass-drop"></i>
+                <h1 class="text-3xl font-extrabold tracking-wider text-white">MY SHAKE</h1>
+            </div>
+            <p class="text-xs font-semibold tracking-widest text-white/80 uppercase">Juices • Pastries • Small Treats</p>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 mt-6">
+        <!-- Configuration du domaine local -->
+        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 mb-6 shadow-lg border border-white/40">
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                <i class="fa-solid fa-link text-teal-600 mr-1"></i> Domaine / URL de votre site (Netlify/GitHub)
+            </label>
+            <input type="text" id="baseUrlInput" placeholder="https://votre-app.netlify.app" 
+                class="w-full text-sm p-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+            <p class="text-[11px] text-gray-500 mt-1">Lien utilisé pour ouvrir le badge sur le téléphone du client.</p>
+        </div>
+
+        <!-- Navigation Onglets -->
+        <div class="flex bg-white/20 p-1 rounded-2xl mb-6 backdrop-blur-md">
+            <button onclick="switchTab('admin')" id="tab-admin" class="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all bg-white text-teal-900 shadow">
+                <i class="fa-solid fa-user-gear mr-1"></i> Caisse (Gérant)
+            </button>
+            <button onclick="switchTab('scan')" id="tab-scan" class="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all text-white hover:bg-white/10">
+                <i class="fa-solid fa-qrcode mr-1"></i> Scanner
+            </button>
+            <button onclick="switchTab('client')" id="tab-client" class="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all text-white hover:bg-white/10">
+                <i class="fa-solid fa-id-card mr-1"></i> Vue Client
+            </button>
+        </div>
+
+        <!-- Vue Admin (Création Client) -->
+        <div id="view-admin" class="space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-white/50">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-teal-600"></i> Nouveau Client
+                </h2>
+                <form id="createClientForm" onsubmit="handleCreateClient(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nom du client *</label>
+                        <input type="text" id="clientName" required placeholder="Ex: Karim Benali" 
+                            class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Téléphone (Optionnel)</label>
+                        <input type="tel" id="clientPhone" placeholder="Ex: 0612345678" 
+                            class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-myshake-dark text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-opacity-90 transition active:scale-98">
+                        Générer la carte MyShake
+                    </button>
+                </form>
+            </div>
+
+            <!-- Résultat QR Code -->
+            <div id="qrResult" class="hidden bg-myshake-card rounded-3xl p-6 shadow-xl text-center border-2 border-myshake">
+                <h3 class="text-lg font-bold text-myshake-dark mb-1" id="resName">--</h3>
+                <p class="text-xs text-gray-600 mb-4" id="resPhone">--</p>
+                
+                <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mb-4">
+                    <div id="qrcodeCanvas"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="shareWhatsApp()" class="bg-emerald-600 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow hover:bg-emerald-700">
+                        <i class="fa-brands fa-whatsapp text-base"></i> Partager
+                    </button>
+                    <button onclick="openClientLink()" class="bg-teal-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow hover:bg-teal-800">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Ouvrir Fiche
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vue Scanner -->
+        <div id="view-scan" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-white/50 text-center">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Scanner le QR du Client</h2>
+                <p class="text-xs text-gray-500 mb-4">Pointez la caméra vers le téléphone du client</p>
+                
+                <div id="reader" class="overflow-hidden rounded-2xl border-2 border-dashed border-teal-500 bg-gray-50"></div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs text-gray-500 mb-2">Ou recherche manuelle :</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="manualId" placeholder="ID Client" class="flex-1 p-2.5 text-sm border rounded-xl">
+                        <button onclick="scanManual()" class="bg-teal-700 text-white px-4 rounded-xl font-bold text-sm">Valider</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vue Client / Badge -->
+        <div id="view-client" class="hidden space-y-6">
+            <div class="bg-myshake-card rounded-3xl p-6 shadow-2xl border-2 border-myshake text-center relative overflow-hidden">
+                <div class="absolute -right-8 -top-8 w-24 h-24 bg-teal-500/10 rounded-full blur-xl"></div>
+                
+                <!-- En-tête Carte -->
+                <div class="flex justify-between items-center mb-6">
+                    <div class="text-left">
+                        <span class="text-[10px] font-extrabold tracking-widest text-teal-800 uppercase block">Carte de Fidélité</span>
+                        <h2 class="text-2xl font-black text-myshake-dark" id="displayClientName">Client MyShake</h2>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-myshake-dark text-white flex items-center justify-center font-bold text-lg">
+                        🥤
+                    </div>
+                </div>
+
+                <!-- QR Code Client -->
+                <div class="bg-white p-4 rounded-2xl inline-block shadow-md mb-6 border border-gray-100">
+                    <div id="clientCardQr"></div>
+                </div>
+
+                <!-- Grille de Tampons (0/5) -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2 px-1">
+                        <span class="text-xs font-bold text-gray-700">Tampons Actuels</span>
+                        <span class="text-xs font-black text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full" id="cycleText">0 / 5</span>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2" id="stampsGrid">
+                        <!-- Tampons générés dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Total Global -->
+                <div class="bg-white/80 backdrop-blur rounded-2xl p-4 border border-white/60 mb-6 flex justify-between items-center">
+                    <div class="text-left">
+                        <span class="text-xs text-gray-500 block">Total Tampons Cumulés</span>
+                        <span class="text-xs font-semibold text-teal-800">Historique global</span>
+                    </div>
+                    <span class="text-2xl font-black text-myshake-dark" id="globalTotalCount">0</span>
+                </div>
+
+                <!-- Action Incrémenter (Gérant) -->
+                <button onclick="addStampToCurrent()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-lg"></i> Ajouter 1 Tampon
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Data Store
+        let clients = JSON.parse(localStorage.getItem('myshake_clients') || '{}');
+        let currentClientId = null;
+        let html5QrcodeScanner = null;
+
+        // Init Base URL
+        const savedUrl = localStorage.getItem('myshake_base_url') || window.location.origin + window.location.pathname;
+        document.getElementById('baseUrlInput').value = savedUrl;
+        document.getElementById('baseUrlInput').addEventListener('input', (e) => {
+            localStorage.setItem('myshake_base_url', e.target.value);
+        });
+
+        function getBaseUrl() {
+            return document.getElementById('baseUrlInput').value || window.location.href.split('?')[0];
+        }
+
+        // Navigation
+        function switchTab(tab) {
+            ['admin', 'scan', 'client'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "flex-1 py-2.5 rounded-xl font-bold text-sm transition-all text-white hover:bg-white/10";
+            });
+
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = "flex-1 py-2.5 rounded-xl font-bold text-sm transition-all bg-white text-teal-900 shadow";
+
+            if (tab === 'scan') {
+                startScanner();
+            } else if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+            }
+        }
+
+        // Créer Client
+        function handleCreateClient(e) {
+            e.preventDefault();
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value || '';
+            const id = 'MS-' + Math.random().toString(36).substr(2, 7).toUpperCase();
+
+            const clientData = {
+                id,
+                name,
+                phone,
+                cycleStamps: 0,
+                totalStamps: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            clients[id] = clientData;
+            localStorage.setItem('myshake_clients', JSON.stringify(clients));
+
+            showGeneratedQr(clientData);
+        }
+
+        function showGeneratedQr(client) {
+            currentClientId = client.id;
+            document.getElementById('resName').textContent = client.name;
+            document.getElementById('resPhone').textContent = client.phone ? `📱 ${client.phone}` : 'Sans téléphone';
+            
+            const qrContainer = document.getElementById('qrcodeCanvas');
+            qrContainer.innerHTML = '';
+            
+            const clientUrl = `${getBaseUrl()}?id=${client.id}`;
+            new QRCode(qrContainer, {
+                text: clientUrl,
+                width: 160,
+                height: 160,
+                colorDark : "#2D4A3E",
+                colorLight : "#ffffff"
+            });
+
+            document.getElementById('qrResult').classList.remove('hidden');
+        }
+
+        function shareWhatsApp() {
+            if (!currentClientId) return;
+            const client = clients[currentClientId];
+            const clientUrl = `${getBaseUrl()}?id=${client.id}`;
+            const message = `Bonjour ${client.name} ! Voici votre carte de fidélité numérique MyShake 🥤 : ${clientUrl}`;
+            window.open(`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function openClientLink() {
+            if (!currentClientId) return;
+            loadClientView(currentClientId);
+            switchTab('client');
+        }
+
+        // Chargement Fiche Client
+        function loadClientView(id) {
+            let client = clients[id];
+            if (!client) {
+                client = { id, name: "Client MyShake", phone: "", cycleStamps: 0, totalStamps: 0 };
+            }
+            currentClientId = id;
+
+            document.getElementById('displayClientName').textContent = client.name;
+            document.getElementById('cycleText').textContent = `${client.cycleStamps} / 5`;
+            document.getElementById('globalTotalCount').textContent = client.totalStamps;
+
+            // Render Stamps
+            const grid = document.getElementById('stampsGrid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const isStamped = i <= client.cycleStamps;
+                const stamp = document.createElement('div');
+                stamp.className = `stamp-box rounded-2xl flex items-center justify-center font-bold text-lg transition-all ${
+                    isStamped ? 'stamp-active shadow-md scale-105' : 'bg-white/50 text-gray-300'
+                }`;
+                stamp.innerHTML = isStamped ? '🥤' : i;
+                grid.appendChild(stamp);
+            }
+
+            // QR Client
+            const qrContainer = document.getElementById('clientCardQr');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: `${getBaseUrl()}?id=${id}`,
+                width: 140,
+                height: 140,
+                colorDark : "#2D4A3E",
+                colorLight : "#ffffff"
+            });
+        }
+
+        // Ajouter Tampon
+        function addStampToCurrent() {
+            if (!currentClientId) return;
+            if (!clients[currentClientId]) {
+                clients[currentClientId] = {
+                    id: currentClientId,
+                    name: "Client MyShake",
+                    phone: "",
+                    cycleStamps: 0,
+                    totalStamps: 0
+                };
+            }
+
+            let client = clients[currentClientId];
+            client.cycleStamps += 1;
+            client.totalStamps += 1;
+
+            if (client.cycleStamps >= 5) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                setTimeout(() => {
+                    alert(`🎉 FÉLICITATIONS ! ${client.name} a atteint 5 tampons ! Offrez-lui sa boisson/friandise offerte ! 🎁`);
+                    client.cycleStamps = 0;
+                    localStorage.setItem('myshake_clients', JSON.stringify(clients));
+                    loadClientView(currentClientId);
+                }, 300);
+            } else {
+                localStorage.setItem('myshake_clients', JSON.stringify(clients));
+                loadClientView(currentClientId);
+            }
+        }
+
+        // Scanner
+        function startScanner() {
+            if (html5QrcodeScanner) return;
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 200, height: 200 } });
+            html5QrcodeScanner.render((decodedText) => {
+                let id = decodedText;
+                if (decodedText.includes('?id=')) {
+                    id = decodedText.split('?id=')[1];
+                }
+                html5QrcodeScanner.clear();
+                html5QrcodeScanner = null;
+                loadClientView(id);
+                switchTab('client');
+            }, (error) => {});
+        }
+
+        function scanManual() {
+            const id = document.getElementById('manualId').value.trim();
+            if (id) {
+                loadClientView(id);
+                switchTab('client');
+            }
+        }
+
+        // Auto load URL Query
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const clientId = urlParams.get('id');
+            if (clientId) {
+                loadClientView(clientId);
+                switchTab('client');
+            }
+        });
+    </script>
+</body>
+</html>
